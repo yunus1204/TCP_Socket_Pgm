@@ -1,0 +1,39 @@
+import socket
+
+
+def main():
+    server_address = "192.168.154.157"  # Use the server's IP address here
+    server_port = 12345
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        client_socket.connect((server_address, server_port))
+    except ConnectionRefusedError:
+        print("Error: The server is not running or is not reachable.")
+        return
+
+    try:
+        # Get the client's name
+        client_name = input("Enter your name: ")
+        client_socket.send(client_name.encode())
+
+        while True:
+            response = client_socket.recv(1024).decode()
+            if response.startswith("Question:"):
+                print(response)
+                answer = input("Your answer: ")
+                client_socket.send(answer.encode())
+            elif response == "Quiz Over":
+                print("Quiz Over. Thank you for playing!")
+                break
+            else:
+                print(response)
+    except KeyboardInterrupt:
+        print("Quiz aborted by the user.")
+    finally:
+        client_socket.close()
+
+
+if __name__ == "__main__":
+    main()
