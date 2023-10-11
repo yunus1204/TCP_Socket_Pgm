@@ -1,0 +1,75 @@
+import socket
+import threading
+
+questions = [
+    {
+        "question": "What is the capital of France?",
+        "answer": "Paris",
+    },
+    {
+        "question": "Which planet is known as the Red Planet?",
+        "answer": "Mars",
+    },
+]
+
+current_question_index = 0
+
+def handle_client(client_socket):
+    global current_question_index
+
+    try:
+        # Get the client's name
+        client_name = client_socket.recv(1024).decode().strip()
+        print(f"Client {client_name} connected.")
+
+        while current_question_index < len(questions):
+            question_data = questions[current_question_index]
+            question_text = question_data["question"]
+
+            # Send the question to the client
+            client_socket.send(f"Question: {question_text}\n".encode())
+
+            # Receive the client's answer
+            client_answer = client_socket.recv(1024).decode().strip()
+
+            # Send the client's name and answer to the server
+            print(f"Client {client_name} answered: {client_answer}")
+            # sum=0;
+            if client_answer.lower() == question_data["answer"].lower():
+                client_socket.send("Correct!\n".encode())
+                # sum=sum+1
+                print(f"Client {client_name} answer is CORRECT and  gained 1 mark")
+            else:
+                client_socket.send("Incorrect!\n".encode())
+                #sum=sum-1
+                # if(sum<0):
+                #     print(f"{client_name} gain 0 mark")
+                # else:
+                #     print(f"{client_name} gain {sum} mark")
+
+            current_question_index += 1
+
+        client_socket.send("Quiz Over\n".encode())
+        print(f"Client {client_name} finished the quiz.")
+        print(f"Client {client_name} scores {sum} marks.")
+        sum=0;
+
+    except Exception as e:
+        print(f"Client {client_name} disconnected: {str(e)}")
+    finally:
+        client_socket.close()
+
+def main():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(('10.1.34.165', 12345))
+    server.listen(5)
+    print("Quiz Server is running. Waiting for clients...")
+
+    while True:
+        client_sock, addr = server.accept()
+        print(f"Accepted connection from {addr[0]}:{addr[1]}")
+        client_handler = threading.Thread(target=handle_client, args=(client_sock,))
+        client_handler.start()
+
+if __name__ == "__main__":
+    main()
